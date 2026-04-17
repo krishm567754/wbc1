@@ -1,0 +1,105 @@
+[
+  {
+    "id": "volumeBySE",
+    "name": "Volume by Sales Exec",
+    "type": "volume_by_se",
+    "isBuiltIn": true,
+    "description": "Total sales volume grouped by Sales Executive (excludes Autocare brands)."
+  },
+  {
+    "id": "weeklySales",
+    "name": "Weekly Sales Volume",
+    "type": "weekly_volume",
+    "isBuiltIn": true,
+    "description": "Sales volume split by week of the current month (excludes Autocare brands)."
+  },
+  {
+    "id": "activCount",
+    "name": "'Activ' Customer Count",
+    "type": "brand_customer_count",
+    "isBuiltIn": true,
+    "description": "Unique customer count for Activ brand (excludes Activ Essential). Threshold: 0.9L.",
+    "filterMode": "brand",
+    "brandsInclude": ["ACTIV"],
+    "brandsExclude": ["ACTIV ESSENTIAL"],
+    "threshold": 0.9,
+    "metricType": "customer_count"
+  },
+  {
+    "id": "power1Count",
+    "name": "'Power1' Customer Count",
+    "type": "product_customer_count",
+    "isBuiltIn": true,
+    "description": "Unique customer count for Power1 products (exact product match). Threshold: 5L.",
+    "filterMode": "product_list",
+    "productList": [
+      "POWER1 4T 10W-30, 10X.9L MK",
+      "POWER1 4T 10W-30, 10X1L MK",
+      "POWER1 4T 15W-40, 10X1L MK",
+      "POWER1 CRUISE4T 20W50 10X1.2HMK",
+      "POWER1 CRUISE 4T20W-50,10X1L",
+      "POWER1 ULTIMATE4T10W-40,6X1LMK",
+      "POWER1CRUISE4T 15W50,4X2.5L MK"
+    ],
+    "threshold": 5,
+    "metricType": "customer_count"
+  },
+  {
+    "id": "magnatecCount",
+    "name": "'Magnatec' Customer Count",
+    "type": "brand_customer_count",
+    "isBuiltIn": true,
+    "description": "Unique customer count for Magnatec / Magntec SUV / Magnatec Diesel. Threshold: 3.5L.",
+    "filterMode": "brand",
+    "brandsInclude": ["MAGNATEC", "MAGNTEC SUV", "MAGNATEC DIESEL"],
+    "brandsExclude": [],
+    "threshold": 3.5,
+    "metricType": "customer_count"
+  },
+  {
+    "id": "crbCount",
+    "name": "'CRB Turbomax' Customer Count",
+    "type": "brand_customer_count",
+    "isBuiltIn": true,
+    "description": "Unique customer count for CRB Turbomax brand. Threshold: 1L. Has product-level drill-down.",
+    "filterMode": "brand",
+    "brandsInclude": ["CRB TURBOMAX"],
+    "brandsExclude": [],
+    "threshold": 1,
+    "metricType": "customer_count",
+    "hasProductDrilldown": true
+  },
+  {
+    "id": "highVolCount",
+    "name": "High-Volume Customer Count",
+    "type": "core_volume_count",
+    "isBuiltIn": true,
+    "description": "Customers with >= 9L of core products (excludes non-core products and Autocare brands)."
+  },
+  {
+    "id": "autocareCount",
+    "name": "Autocare Count",
+    "type": "brand_customer_count",
+    "isBuiltIn": true,
+    "description": "Unique customer count for Auto Care Exterior / Auto Care Maintenance brands. Threshold: 5L.",
+    "filterMode": "brand",
+    "brandsInclude": ["AUTO CARE EXTERIOR", "AUTO CARE MAINTENANCE"],
+    "brandsExclude": [],
+    "threshold": 5,
+    "metricType": "customer_count"
+  },
+  {
+    "id": "volByBrand",
+    "name": "Volume by Brand",
+    "type": "volume_by_brand",
+    "isBuiltIn": true,
+    "description": "Total sales volume grouped by product brand name."
+  },
+  {
+    "id": "topCustomers",
+    "name": "Top 10 Customers",
+    "type": "top_customers",
+    "isBuiltIn": true,
+    "description": "Top 10 customers ranked by total invoice value (incl. VAT/GST)."
+  }
+]

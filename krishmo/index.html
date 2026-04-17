@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<!--
+  ⚠️ IMPORTANT: If you see wavy decorations, clear your browser cache!
+  How: Press Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)
+  Or: Settings → Clear browsing data → Cached images and files
+  Version: 2.1 (Feb 6, 2026)
+-->
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Unified Sales Dashboard v2.1</title>
+<!-- VERSION 2.1 - 2026-02-06 - Cache bust -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── Base ─── */
+body { font-family:'Inter',sans-serif; background:#0f172a; color:#cbd5e1; }
+.nav-link.active { background:#4f46e5; color:#fff; }
+.report-button.active { background:#4f46e5; color:#fff; box-shadow:0 4px 14px rgba(79,70,229,.5); }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:#1e293b; }
+::-webkit-scrollbar-thumb { background:#4f46e5; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#6366f1; }
+.drilldown-row { cursor:pointer; }
+.drilldown-row:hover { background:#1e293b; }
+
+/* ─── Loader ─── */
+#loader-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s; }
+.spinner { width:48px;height:48px;border:5px solid #4f46e5;border-bottom-color:transparent;border-radius:50%;animation:rotation 1s linear infinite; }
+@keyframes rotation { to { transform:rotate(360deg); } }
+
+/* ─── Status tags ─── */
+.status-qualified { color:#22c55e; font-weight:500; }
+.status-under     { color:#f59e0b; font-weight:500; }
+
+/* ─── Refresh btn ─── */
+#refresh-button { background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;transition:background .2s,transform .5s; }
+#refresh-button:hover { background:#334155; }
+#refresh-button.spinning svg { animation:rotation 1.5s linear infinite; }
+
+/* ─── KPI summary cards ─── */
+.kpi-card { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:16px; transition:border-color .2s; }
+.kpi-card:hover { border-color:#4f46e5; }
+.kpi-card .progress-bar { height:6px; border-radius:3px; background:#334155; overflow:hidden; margin-top:8px; }
+.kpi-card .progress-fill { height:100%; border-radius:3px; transition:width .6s ease; }
+.kpi-card .color-green .progress-fill { background:#22c55e; }
+.kpi-card .color-yellow .progress-fill { background:#f59e0b; }
+.kpi-card .color-red .progress-fill { background:#ef4444; }
+
+/* ─── Custom KPI report buttons ─── */
+.report-button.custom-kpi { border:1px solid #6366f1; }
+
+/* ─── Admin panel ─── */
+.admin-section { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; margin-bottom:20px; }
+.admin-section h3 { color:#fff; font-size:18px; font-weight:600; margin-bottom:12px; }
+
+/* ─── Pills (multi-select) ─── */
+.pill-container { display:flex; flex-wrap:wrap; gap:6px; min-height:34px; align-items:center; padding:4px 8px; background:#0f172a; border:1px solid #475569; border-radius:8px; }
+.pill { display:inline-flex; align-items:center; gap:4px; background:#4f46e5; color:#fff; border-radius:20px; padding:3px 10px; font-size:13px; }
+.pill .pill-x { cursor:pointer; color:#a5b4fc; font-size:16px; line-height:1; }
+.pill .pill-x:hover { color:#fff; }
+
+/* ─── Saved KPI list ─── */
+.saved-kpi-item { background:#0f172a; border:1px solid #334155; border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.saved-kpi-item .kpi-meta { font-size:13px; color:#94a3b8; }
+.saved-kpi-item .kpi-name { color:#fff; font-weight:600; margin-bottom:2px; font-size:15px; }
+.saved-kpi-item .kpi-actions { display:flex; gap:8px; flex-shrink:0; }
+.saved-kpi-item .kpi-actions button { border:none; cursor:pointer; font-size:14px; padding:6px 12px; border-radius:6px; transition:all .2s; font-weight:600; }
+.saved-kpi-item .btn-edit { color:#fff; background:#4f46e5; }
+.saved-kpi-item .btn-edit:hover { background:#6366f1; transform:translateY(-1px); }
+.saved-kpi-item .btn-delete { color:#fff; background:#dc2626; }
+.saved-kpi-item .btn-delete:hover { background:#ef4444; transform:translateY(-1px); }
+
+/* ─── Password modal ─── */
+#password-modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.95); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.password-box { background:#1e293b; border:2px solid #4f46e5; border-radius:16px; padding:32px; max-width:400px; width:90%; }
+.password-box h2 { color:#fff; font-size:24px; font-weight:700; margin-bottom:16px; text-align:center; }
+.password-box input { width:100%; background:#0f172a; border:1px solid #475569; color:#fff; border-radius:8px; padding:12px; font-size:16px; margin-bottom:16px; }
+.password-box button { width:100%; background:#4f46e5; color:#fff; border:none; border-radius:8px; padding:12px; font-size:16px; font-weight:600; cursor:pointer; transition:background .2s; }
+.password-box button:hover { background:#6366f1; }
+.password-error { color:#ef4444; text-align:center; font-size:14px; margin-top:8px; display:none; }
+
+/* ─── Target rows ─── */
+.target-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.target-row label { color:#cbd5e1; font-size:14px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.target-row input { width:90px; background:#0f172a; border:1px solid #475569; color:#fff; border-radius:6px; padding:5px 8px; font-size:14px; }
+
+/* ─── Form selects in admin ─── */
+.admin-select { background:#0f172a; border:1px solid #475569; color:#fff; border-radius:8px; padding:6px 12px; font-size:14px; width:100%; }
+.admin-select option { background:#1e293b; }
+</style>
+</head>
+<body class="h-full flex flex-col">
+
+<!-- ════════════════ LOADER ════════════════ -->
+<div id="loader-overlay">
+  <div class="text-center">
+    <div class="spinner"></div>
+    <p id="loader-text" class="text-white text-lg font-semibold mt-4">Loading Dashboard…</p>
+  </div>
+</div>
+
+<!-- ════════════════ PASSWORD MODAL (for Admin) ════════════════ -->
+<div id="password-modal" style="display:none;">
+  <div class="password-box">
+    <h2>🔒 Admin Access</h2>
+    <p class="text-slate-400 text-sm text-center mb-4">Enter password to access Admin Panel</p>
+    <input type="password" id="admin-password-input" placeholder="Enter password" autocomplete="off">
+    <button id="password-submit-btn">Unlock</button>
+    <p class="password-error" id="password-error">❌ Incorrect password</p>
+  </div>
+</div>
+
+<!-- ════════════════ HEADER / NAV ════════════════ -->
+<header class="bg-slate-800 shadow-md sticky top-0 z-10">
+  <nav class="container mx-auto px-4 py-3">
+    <h1 class="text-xl font-bold text-white mb-2 sm:mb-0 text-center sm:text-left">📊 Sales Dashboard</h1>
+    <div class="flex gap-2 justify-center sm:justify-start flex-wrap">
+      <button id="nav-sales"    class="nav-link active text-white font-semibold px-3 py-2 rounded-lg transition-colors text-sm">Dashboard</button>
+      <button id="nav-unbilled" class="nav-link text-slate-300 hover:bg-slate-700 hover:text-white font-semibold px-3 py-2 rounded-lg transition-colors text-sm">Unbilled</button>
+      <button id="nav-admin"    class="nav-link text-slate-300 hover:bg-slate-700 hover:text-white font-semibold px-3 py-2 rounded-lg transition-colors text-sm">⚙ Admin</button>
+      <a href="https://krishmodiexp.xo.je" target="_blank" rel="noopener noreferrer" class="nav-link text-slate-300 hover:bg-slate-700 hover:text-white font-semibold px-3 py-2 rounded-lg transition-colors text-sm flex items-center gap-1">📋 Scheme Tracker <svg xmlns="http://www.w3.org/2000/svg" class="inline w-3 h-3 opacity-60" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg></a>
+    </div>
+  </nav>
+</header>
+
+<main class="container mx-auto p-4 md:p-6 flex-grow">
+
+<!-- ════════════════ PAGE 1 – SALES DASHBOARD ════════════════ -->
+<div id="page-sales" class="page-container">
+  <div class="text-center mb-6">
+    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-1">Main Sales Dashboard</h2>
+    <p id="current-month-text" class="text-slate-400 text-sm"></p>
+    <p id="last-updated-text" class="text-xs text-slate-500 mt-1">Last Updated: Never</p>
+  </div>
+
+  <!-- Report Selector + Table -->
+  <div class="bg-slate-800 p-4 sm:p-6 rounded-xl shadow-lg">
+    <h3 class="text-lg sm:text-xl font-semibold text-white mb-3">Select a Report</h3>
+    <div id="report-buttons" class="grid grid-cols-2 gap-2 mb-6 border-b border-slate-700 pb-4"></div>
+    <div id="report-container-sales">
+      <div class="text-center py-10 text-slate-500">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ PAGE 2 – UNBILLED ════════════════ -->
+<div id="page-unbilled" class="page-container hidden">
+  <div class="text-center mb-6">
+    <h2 class="text-3xl font-bold text-white mb-1">Unbilled &amp; Under-Billed Customers</h2>
+    <p class="text-slate-400">Core product volume &lt; 9 Ltr this month</p>
+  </div>
+  <div id="report-container-unbilled" class="bg-slate-800 p-6 rounded-xl shadow-lg"></div>
+</div>
+
+<!-- ════════════════ PAGE 3 – ADMIN PANEL ════════════════ -->
+<div id="page-admin" class="page-container hidden">
+  <div class="text-center mb-6">
+    <h2 class="text-3xl font-bold text-white mb-1">⚙ Admin Panel</h2>
+    <p class="text-slate-400">Create custom KPIs with Sector → Brand → Product filters</p>
+  </div>
+
+  <!-- Refresh section -->
+  <div class="admin-section">
+    <h3>🔄 Data Refresh</h3>
+    <p class="text-slate-400 text-sm mb-3">Re-process all Excel data and regenerate the dashboard cache. Run this after uploading new data or creating/editing KPIs.</p>
+    <button id="admin-refresh-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg transition">Refresh Now</button>
+  </div>
+
+  <!-- Built-in KPIs Configuration -->
+  <div class="admin-section">
+    <h3>⚙️ Configure Built-in Reports</h3>
+    <p class="text-slate-400 text-sm mb-4">Customize thresholds and targets for built-in reports</p>
+    
+    <div class="space-y-4">
+      <!-- Activ -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">Activ Customer Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('activ')">⚙ Configure</button>
+        </div>
+        <div id="config-activ" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="activ-threshold" value="0.9" step="0.1" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Customers with ≥0.9L Activ volume</div>
+        </div>
+      </div>
+
+      <!-- Power1 -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">Power1 Customer Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('power1')">⚙ Configure</button>
+        </div>
+        <div id="config-power1" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="power1-threshold" value="5" step="0.5" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Customers with ≥${BUILTIN_THRESHOLDS.power1}L Power1 volume</div>
+        </div>
+      </div>
+
+      <!-- Magnatec -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">Magnatec Customer Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('magnatec')">⚙ Configure</button>
+        </div>
+        <div id="config-magnatec" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="magnatec-threshold" value="3.5" step="0.5" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Customers with ≥${BUILTIN_THRESHOLDS.magnatec}L Magnatec volume</div>
+        </div>
+      </div>
+
+      <!-- CRB -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">CRB Turbomax Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('crb')">⚙ Configure</button>
+        </div>
+        <div id="config-crb" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="crb-threshold" value="1" step="0.5" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Customers with ≥${BUILTIN_THRESHOLDS.crb}L CRB volume</div>
+        </div>
+      </div>
+
+      <!-- High-Volume -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">High-Volume (9L) Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('highvol')">⚙ Configure</button>
+        </div>
+        <div id="config-highvol" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="highvol-threshold" value="9" step="1" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Core products ≥${BUILTIN_THRESHOLDS.highvol}L volume</div>
+        </div>
+      </div>
+
+      <!-- Autocare -->
+      <div class="bg-slate-900 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-white font-semibold">Autocare Count</h4>
+          <button class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold" onclick="toggleBuiltinConfig('autocare')">⚙ Configure</button>
+        </div>
+        <div id="config-autocare" class="hidden mt-3 space-y-2">
+          <div class="flex items-center gap-4">
+            <label class="text-slate-400 text-sm">Threshold (Ltr):</label>
+            <input type="number" id="autocare-threshold" value="5" step="0.5" class="w-24 bg-slate-800 border border-slate-600 text-white rounded px-2 py-1 text-sm">
+          </div>
+          <div class="text-slate-500 text-xs">Current: Customers with ≥${BUILTIN_THRESHOLDS.power1}L Autocare volume</div>
+        </div>
+      </div>
+  <!-- Built-in KPIs List (Editable) -->
+  <div class="admin-section">
+    <h3>⚙️ Built-in Reports (Editable)</h3>
+    <p class="text-slate-400 text-sm mb-4">Click Edit to customize filters, thresholds, and targets for any built-in report</p>
+    <div id="builtin-kpis-list"></div>
+  </div>
+
+  <!-- KPI Builder form -->
+  <div class="admin-section" id="kpi-builder-section">
+    <h3 id="builder-title">➕ Create New KPI</h3>
+    <input type="hidden" id="editing-kpi-id" value="">
+
+    <!-- Name + Type row -->
+    <div class="flex flex-wrap gap-4 mb-4">
+      <div class="flex-1" style="min-width:200px;">
+        <label class="block text-slate-400 text-sm mb-1">KPI Name</label>
+        <input id="kpi-name-input" type="text" placeholder="e.g. CRB Plus Distribution" class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+      </div>
+      <div style="min-width:160px;">
+        <label class="block text-slate-400 text-sm mb-1">KPI Type</label>
+        <select id="kpi-type-select" class="admin-select">
+          <option value="customer_count">Customer Count (≥ threshold)</option>
+          <option value="volume">Total Volume (Ltr)</option>
+        </select>
+      </div>
+      <div style="min-width:100px;">
+        <label class="block text-slate-400 text-sm mb-1">Threshold (Ltr)</label>
+        <input id="kpi-threshold-input" type="number" value="9" step="0.5" min="0" class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+      </div>
+    </div>
+
+    <!-- Sector pills -->
+    <div class="mb-3">
+      <label class="block text-slate-400 text-sm mb-1">Sectors <span class="text-slate-600">(empty = all sectors)</span></label>
+      <div class="flex gap-3 flex-wrap items-end">
+        <div id="sector-pills" class="pill-container flex-1" style="min-width:200px;"></div>
+        <select id="sector-dropdown" class="admin-select" style="max-width:220px;"><option value="">— pick sector —</option></select>
+      </div>
+    </div>
+    <!-- Brand pills -->
+    <div class="mb-3">
+      <label class="block text-slate-400 text-sm mb-1">Brands <span class="text-slate-600">(empty = all brands in selected sectors)</span></label>
+      <div class="flex gap-3 flex-wrap items-end">
+        <div id="brand-pills" class="pill-container flex-1" style="min-width:200px;"></div>
+        <select id="brand-dropdown" class="admin-select" style="max-width:220px;"><option value="">— pick brand —</option></select>
+      </div>
+    </div>
+    <!-- Product pills -->
+    <div class="mb-4">
+      <label class="block text-slate-400 text-sm mb-1">Products <span class="text-slate-600">(empty = all products in selected brands)</span></label>
+      <div class="flex gap-3 flex-wrap items-end">
+        <div id="product-pills" class="pill-container flex-1" style="min-width:200px;"></div>
+        <select id="product-dropdown" class="admin-select" style="max-width:260px;"><option value="">— pick product —</option></select>
+      </div>
+    </div>
+
+    <!-- SE Targets -->
+    <div class="mb-4">
+      <label class="block text-slate-400 text-sm mb-2">SE-wise Targets</label>
+      <div id="target-rows" class="bg-slate-900 rounded-lg p-3"></div>
+    </div>
+
+    <!-- Save button -->
+    <button id="save-kpi-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-6 rounded-lg transition">Save KPI</button>
+    <button id="cancel-edit-btn" class="hidden ml-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition">Cancel</button>
+  </div>
+
+  <!-- Saved KPIs list -->
+  <div class="admin-section">
+    <h3>📋 Saved Custom KPIs</h3>
+    <div id="saved-kpis-list"><p class="text-slate-500 text-sm">No custom KPIs yet.</p></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer class="text-center p-4 mt-8 border-t border-slate-800">
+  <div class="flex items-center justify-center gap-2">
+    <button id="refresh-button" title="Refresh Dashboard Data">
+      <svg class="w-5 h-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0 0v-4.992m0 4.992h-4.992"/>
+      </svg>
+    </button>
+    <p class="text-sm text-slate-500">Made By Krish Modi</p>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════════
+                         JAVASCRIPT
+     ════════════════════════════════════════════════════════════ -->
+<script>
+// ─── Globals ───
+let cachedDashboardData = {};
+let salesReports = [];
+let CUSTOM_KPIS = [];   // live copy from config
+
+// ─── Config vars (populated by loadConfig) ───
+let DATA_FOLDER, CUSTOMER_MASTER_FILE, INVOICE_DATA_FILES;
+let EXCLUDED_PRODUCTS_LIST, POWER1_PRODUCTS_LIST;
+let ACTIV_BRANDS_INCLUDE, ACTIV_BRANDS_EXCLUDE, MAGNATEC_BRANDS_INCLUDE, CRB_BRANDS_INCLUDE, AUTOCARE_BRANDS_INCLUDE;
+let COL_INVOICE_DATE, COL_SE_NAME, COL_CUSTOMER_NAME, COL_CUSTOMER_CODE;
+let COL_BRAND_NAME, COL_PRODUCT_NAME, COL_PRODUCT_VOLUME, COL_PACK_SIZE, COL_TOTAL_VALUE, COL_SECTOR_NAME;
+let COL_MASTER_CUSTOMER_CODE, COL_MASTER_CUSTOMER_NAME, COL_MASTER_SE_NAME;
+let currentMonth, currentYear, currentMonthName;
+
+// ─── Built-in KPI Thresholds (editable) ───
+let BUILTIN_THRESHOLDS = {
+  activ: 0.9,
+  power1: 5,
+  magnatec: 3.5,
+  crb: 1,
+  highvol: 9,
+  autocare: 5
+};
+
+// ─── Built-in KPIs (editable like custom KPIs) ───
+let BUILTIN_KPIS = [
+  { 
+    id: 'volumeBySE', 
+    name: "Volume by Sales Exec", 
+    type: 'volume', 
+    threshold: 0, 
+    sectors: [], 
+    brands: [], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true, 
+    excludeProducts: true,
+    excludeAutocare: true
+  },
+  { 
+    id: 'weeklySales', 
+    name: "Weekly Sales Volume", 
+    type: 'volume', 
+    threshold: 0, 
+    sectors: [], 
+    brands: [], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true, 
+    byWeek: true 
+  },
+  { 
+    id: 'activ', 
+    name: "'Activ' Customer Count", 
+    type: 'customer_count', 
+    threshold: 0.9, 
+    sectors: [], 
+    brands: ['ACTIV'], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true, 
+    excludeBrands: ['ACTIV ESSENTIAL'] 
+  },
+  { 
+    id: 'power1', 
+    name: "'Power1' Customer Count", 
+    type: 'customer_count', 
+    threshold: 5, 
+    sectors: [], 
+    brands: [], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true, 
+    useProductList: true 
+  },
+  { 
+    id: 'magnatec', 
+    name: "'Magnatec' Customer Count", 
+    type: 'customer_count', 
+    threshold: 3.5, 
+    sectors: [], 
+    brands: ['MAGNATEC', 'MAGNATEC SUV', 'MAGNATEC DIESEL'], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true 
+  },
+  { 
+    id: 'crb', 
+    name: "'CRB Turbomax' Count", 
+    type: 'customer_count', 
+    threshold: 1, 
+    sectors: [], 
+    brands: ['CRB TURBOMAX'], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true 
+  },
+  { 
+    id: 'highvol', 
+    name: "High-Volume (9L) Count", 
+    type: 'customer_count', 
+    threshold: 9, 
+    sectors: [], 
+    brands: [], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true, 
+    excludeProducts: true 
+  },
+  { 
+    id: 'autocare', 
+    name: "Autocare Count", 
+    type: 'customer_count', 
+    threshold: 5, 
+    sectors: [], 
+    brands: ['AUTO CARE EXTERIOR', 'AUTO CARE MAINTENANCE'], 
+    products: [], 
+    targets: {}, 
+    isBuiltin: true 
+  }
+];
+
+// ─── Admin state ───
+let sectorBrandProductMap = {}; // sector → brand → [products]  (built from data)
+let sectorSEMap           = {}; // sector → [SE names]           (built from data)
+let allSENames            = []; // from customer master
+let adminUnlocked         = false; // password protection flag
+
+const ADMIN_PASSWORD = 'admin786';
+
+// ─── UI refs ───
+const loader      = document.getElementById('loader-overlay');
+const loaderText  = document.getElementById('loader-text');
+const navSales    = document.getElementById('nav-sales');
+const navUnbilled = document.getElementById('nav-unbilled');
+const navAdmin    = document.getElementById('nav-admin');
+const pageSales   = document.getElementById('page-sales');
+const pageUnbilled= document.getElementById('page-unbilled');
+const pageAdmin   = document.getElementById('page-admin');
+const reportButtonsContainer = document.getElementById('report-buttons');
+const reportContainerSales   = document.getElementById('report-container-sales');
+const reportContainerUnbilled= document.getElementById('report-container-unbilled');
+const currentMonthText       = document.getElementById('current-month-text');
+const lastUpdatedText        = document.getElementById('last-updated-text');
+const refreshButton          = document.getElementById('refresh-button');
+
+// ══════════════════════════════════════════════════
+// 1.  CONFIG LOADER
+// ══════════════════════════════════════════════════
+async function loadConfig() {
+  return new Promise((resolve, reject) => {
+    // Remove old script tag if present
+    const old = document.querySelector('script[data-config="true"]');
+    if (old) old.remove();
+
+    const script = document.createElement('script');
+    script.setAttribute('data-config','true');
+    script.src = `config.js?v=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const C = window.DASHBOARD_CONFIG;
+        if (!C) { reject(new Error('DASHBOARD_CONFIG missing')); return; }
+        DATA_FOLDER            = C.DATA_FOLDER;
+        CUSTOMER_MASTER_FILE   = C.CUSTOMER_MASTER_FILE;
+        INVOICE_DATA_FILES     = C.INVOICE_DATA_FILES;
+        EXCLUDED_PRODUCTS_LIST = C.EXCLUDED_PRODUCTS_LIST.map(s=>s.toUpperCase());
+        POWER1_PRODUCTS_LIST   = new Set(C.POWER1_PRODUCTS_LIST);
+        AUTOCARE_BRANDS_INCLUDE= C.AUTOCARE_BRANDS_INCLUDE.map(s=>s.toUpperCase());
+        ACTIV_BRANDS_INCLUDE   = C.ACTIV_BRANDS_INCLUDE.map(s=>s.toUpperCase());
+        ACTIV_BRANDS_EXCLUDE   = C.ACTIV_BRANDS_EXCLUDE.map(s=>s.toUpperCase());
+        MAGNATEC_BRANDS_INCLUDE= C.MAGNATEC_BRANDS_INCLUDE.map(s=>s.toUpperCase());
+        CRB_BRANDS_INCLUDE     = C.CRB_BRANDS_INCLUDE.map(s=>s.toUpperCase());
+        CUSTOM_KPIS            = Array.isArray(C.CUSTOM_KPIS) ? C.CUSTOM_KPIS : [];
+        
+        // Load built-in KPIs if saved (otherwise use defaults)
+        if (C.BUILTIN_KPIS && Array.isArray(C.BUILTIN_KPIS)) {
+          BUILTIN_KPIS = C.BUILTIN_KPIS;
+        }
+
+        const cols = C.COLUMNS;
+        COL_INVOICE_DATE         = cols.INVOICE_DATE;
+        COL_SE_NAME              = cols.SE_NAME;
+        COL_CUSTOMER_NAME        = cols.CUSTOMER_NAME;
+        COL_CUSTOMER_CODE        = cols.CUSTOMER_CODE;
+        COL_BRAND_NAME           = cols.BRAND_NAME;
+        COL_PRODUCT_NAME         = cols.PRODUCT_NAME;
+        COL_PRODUCT_VOLUME       = cols.PRODUCT_VOLUME;
+        COL_PACK_SIZE            = cols.PACK_SIZE;
+        COL_TOTAL_VALUE          = cols.TOTAL_VALUE;
+        COL_SECTOR_NAME          = cols.SECTOR_NAME;
+        COL_MASTER_CUSTOMER_CODE = cols.MASTER_CUSTOMER_CODE;
+        COL_MASTER_CUSTOMER_NAME = cols.MASTER_CUSTOMER_NAME;
+        COL_MASTER_SE_NAME       = cols.MASTER_SE_NAME;
+        resolve();
+      } catch(e) { reject(e); }
+    };
+    script.onerror = () => reject(new Error('Failed to load config.js'));
+    document.head.appendChild(script);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 2.  MAIN — fast path (reads cache)
+// ══════════════════════════════════════════════════
+async function main() {
+  try {
+    const now = new Date();
+    currentMonth     = now.getMonth();
+    currentYear      = now.getFullYear();
+    currentMonthName = now.toLocaleString('default',{month:'long'});
+    currentMonthText.textContent = `Reports filtered for ${currentMonthName} ${currentYear}.`;
+
+    loaderText.textContent = 'Loading cached data…';
+    const res = await fetch(`dashboard_data.json?v=${Date.now()}`);
+    if (!res.ok) throw new Error(`dashboard_data.json not found (${res.status}). Run Refresh first.`);
+    cachedDashboardData = await res.json();
+
+    // Month-staleness warning
+    if (cachedDashboardData.month !== currentMonth || cachedDashboardData.year !== currentYear) {
+      lastUpdatedText.textContent = '⚠ Cached data is from a previous month. Click Refresh.';
+      lastUpdatedText.classList.replace('text-slate-500','text-yellow-400');
+      lastUpdatedText.classList.add('font-semibold');
+    } else {
+      lastUpdatedText.textContent = `Last Updated: ${new Date(cachedDashboardData.lastUpdated).toLocaleString()}`;
+    }
+
+    // Restore maps from cache if present
+    sectorBrandProductMap = cachedDashboardData.sectorBrandProductMap || {};
+    sectorSEMap           = cachedDashboardData.sectorSEMap           || {};
+    allSENames            = cachedDashboardData.allSENames            || [];
+
+    // Build report list (built-ins + customs)
+    buildSalesReportList();
+    setupEventListeners();
+    populateReportButtons();
+    generateReport(['volumeBySE']);
+    generateUnbilledReport([]);
+    renderAdminPage();
+
+    loader.style.opacity = 0;
+    setTimeout(()=>{ loader.style.display='none'; }, 300);
+
+  } catch(err) {
+    console.error(err);
+    loaderText.innerHTML = `
+      <p class="text-red-400 font-bold text-lg mb-2">Error</p>
+      <p class="text-sm text-slate-300">${err.message}</p>
+      <p class="text-sm text-slate-300 mt-3">Click the ⚙ Admin tab → Refresh Now</p>`;
+    refreshButton.addEventListener('click', handleRefreshClick);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 3.  BUILD REPORT LIST  (built-in + custom KPIs)
+// ══════════════════════════════════════════════════
+function showPage(page) {
+  [pageSales, pageUnbilled, pageAdmin].forEach(p => p.classList.add('hidden'));
+  [navSales, navUnbilled, navAdmin].forEach(n => n.classList.remove('active'));
+  
+  if (page === 'sales') {
+    pageSales.classList.remove('hidden');
+    navSales.classList.add('active');
+  } else if (page === 'unbilled') {
+    pageUnbilled.classList.remove('hidden');
+    navUnbilled.classList.add('active');
+  } else if (page === 'admin') {
+    pageAdmin.classList.remove('hidden');
+    navAdmin.classList.add('active');
+  }
+}
+
+function showPasswordModal() {
+  const modal = document.getElementById('password-modal');
+  const input = document.getElementById('admin-password-input');
+  const error = document.getElementById('password-error');
+  modal.style.display = 'flex';
+  input.value = '';
+  error.style.display = 'none';
+  setTimeout(() => input.focus(), 100);
+}
+
+function hidePasswordModal() {
+  document.getElementById('password-modal').style.display = 'none';
+}
+
+function checkAdminPassword() {
+  const input = document.getElementById('admin-password-input');
+  const error = document.getElementById('password-error');
+  if (input.value === ADMIN_PASSWORD) {
+    adminUnlocked = true;
+    hidePasswordModal();
+    showPage('admin');
+  } else {
+    error.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function buildSalesReportList() {
+  salesReports = [];
+  
+  // Add built-in KPIs first
+  BUILTIN_KPIS.forEach(kpi => {
+    salesReports.push({ name: kpi.name, id: kpi.id, isBuiltin: true });
+  });
+  
+  // Add custom KPIs
+  CUSTOM_KPIS.forEach(kpi => {
+    salesReports.push({ name: `⭐ ${kpi.name}`, id: kpi.id, isCustom: true });
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 4.  UI – POPULATE & EVENT WIRING
+// ══════════════════════════════════════════════════
+function populateReportButtons() {
+  reportButtonsContainer.innerHTML = salesReports.map(r => {
+    const customClass = r.isCustom ? ' border-2 border-indigo-500' : '';
+    const customIcon = r.isCustom ? '⭐ ' : '';
+    return `<button class="report-button text-sm font-semibold px-3 py-3 rounded-lg bg-slate-700 hover:bg-indigo-600 hover:text-white transition-all hover:shadow-lg hover:-translate-y-0.5${customClass}" data-report-id="${r.id}">${customIcon}${r.name}</button>`;
+  }).join('');
+  reportButtonsContainer.querySelector('button')?.classList.add('active');
+}
+
+function setupEventListeners() {
+  // ── Nav ──
+  navSales.addEventListener('click', () => {
+    showPage('sales');
+  });
+  
+  navUnbilled.addEventListener('click', () => {
+    showPage('unbilled');
+  });
+  
+  navAdmin.addEventListener('click', () => {
+    if (!adminUnlocked) {
+      showPasswordModal();
+    } else {
+      showPage('admin');
+    }
+  });
+
+  // ── Report buttons (delegated) ──
+  reportButtonsContainer.addEventListener('click', e => {
+    if (e.target.tagName==='BUTTON') {
+      document.querySelectorAll('#report-buttons .report-button').forEach(b=>b.classList.remove('active'));
+      e.target.classList.add('active');
+      generateReport([e.target.dataset.reportId]);
+    }
+  });
+
+  // ── Drill-down / back / download (delegated on body) ──
+  document.body.addEventListener('click', e => {
+    const dr = e.target.closest('.drilldown-row');
+    const bk = e.target.closest('.back-btn');
+    const dl = e.target.closest('.download-btn');
+    if (dr) {
+      const keys = JSON.parse(dr.dataset.keys);
+      const pg   = dr.closest('.page-container');
+      (pg && pg.id==='page-sales' ? generateReport : generateUnbilledReport)(keys);
+    } else if (bk) {
+      const keys = JSON.parse(bk.dataset.keys);
+      const pg   = bk.closest('.page-container');
+      (pg && pg.id==='page-sales' ? generateReport : generateUnbilledReport)(keys);
+    } else if (dl) {
+      const el = document.getElementById(dl.dataset.targetId);
+      downloadElementAsImage(el, `${el.querySelector('h4').textContent.replace(/[\s/]/g,'_')}.png`);
+    }
+  });
+
+  // ── Footer refresh ──
+  refreshButton.addEventListener('click', handleRefreshClick);
+
+  // ── Admin refresh ──
+  document.getElementById('admin-refresh-btn').addEventListener('click', handleRefreshClick);
+  
+  // ── Password modal ──
+  document.getElementById('password-submit-btn').addEventListener('click', checkAdminPassword);
+  document.getElementById('admin-password-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkAdminPassword();
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 6.  REPORT GENERATION (reads cache)
+// ══════════════════════════════════════════════════
+function generateReport(keys=[]) {
+  let title='', headers=[], rows=[], options={drilldown:{enabled:false}};
+  const reportId = keys[0], key1 = keys[1], key2 = keys[2];
+  const reportData   = cachedDashboardData.reports;
+  const drilldownData= cachedDashboardData.drilldown;
+
+  if (!reportData || !drilldownData) {
+    reportContainerSales.innerHTML = `<div class="text-center py-10 text-yellow-400">Cache missing. Run Refresh.</div>`;
+    return;
+  }
+
+  if (keys.length === 1) {
+    options.drilldown.enabled = true;
+    title = salesReports.find(r=>r.id===reportId)?.name || 'Report';
+    rows  = reportData[reportId] || [];
+    if (drilldownData[reportId]?.level1) {
+      options.drilldown.keys = rows.map(row => [reportId, row[0]]);
+    } else {
+      options.drilldown.enabled = false;
+    }
+  } else {
+    options.drilldown.backKeys = keys.slice(0,-1);
+    options.drilldown.enabled  = true;
+    const info = drilldownData[reportId];
+    if (info?.level2 && key2) {
+      rows    = info.level2[key1]?.[key2] || [];
+      title   = info.level2.title.replace('{key1}',key1).replace('{key2}',key2);
+      headers = info.level2.headers;
+      options.drilldown.enabled = false;
+    } else if (info?.level1) {
+      rows    = info.level1[key1] || [];
+      title   = info.level1.title.replace('{key1}',key1);
+      headers = info.level1.headers;
+      if (!info.level2) { options.drilldown.enabled = false; }
+      else { options.drilldown.keys = (rows||[]).map(row=>[...keys, row[0]]); }
+    }
+  }
+  if (keys.length===1 && drilldownData[reportId]) headers = drilldownData[reportId].base.headers;
+  renderTable(reportContainerSales, title, headers, rows, options);
+}
+
+// ══════════════════════════════════════════════════
+// 7.  UNBILLED REPORT  (simplified - no filters)
+// ══════════════════════════════════════════════════
+function generateUnbilledReport(keys=[]) {
+  const seNameToDrill = keys[0];
+  const unbilledData  = cachedDashboardData.reports?.unbilled;
+  const unbilledDrill = cachedDashboardData.drilldown?.unbilled;
+
+  if (!unbilledData || !unbilledDrill) {
+    reportContainerUnbilled.innerHTML="<p class='text-slate-500 text-center'>Run Refresh first.</p>";
+    return;
+  }
+
+  if (!seNameToDrill) {
+    // ── Base level: SE summary (no filters) ──
+    const rows = [...unbilledData]; // already sorted desc from cache
+    const options = {
+      drilldown: { enabled:true, keys: rows.map(row=>[row[0]]) }
+    };
+    renderTable(reportContainerUnbilled, unbilledDrill.base.title, unbilledDrill.base.headers, rows, options);
+  } else {
+    // ── Drilldown: SE → customers ──
+    const rows = unbilledDrill.level1[seNameToDrill] || [];
+    renderTable(reportContainerUnbilled, unbilledDrill.level1.title.replace('{key1}',seNameToDrill), unbilledDrill.level1.headers, rows, { drilldown:{enabled:false, backKeys:[]} });
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 8.  ADMIN PANEL  – KPI Builder
+// ══════════════════════════════════════════════════
+function renderBuiltinKPIsList() {
+  const container = document.getElementById('builtin-kpis-list');
+  if (!BUILTIN_KPIS || BUILTIN_KPIS.length === 0) {
+    container.innerHTML = '<p class="text-slate-500 text-sm">No built-in KPIs available.</p>';
+    return;
+  }
+  
+  container.innerHTML = BUILTIN_KPIS.map(kpi => {
+    const sectorLabel  = kpi.sectors.length  ? kpi.sectors.join(', ')  : 'All Sectors';
+    const brandLabel   = kpi.brands.length   ? kpi.brands.join(', ')  : 'All Brands';
+    const productLabel = kpi.products.length ? `${kpi.products.length} products` : 'All Products';
+    const typeLabel    = kpi.type === 'customer_count' ? `Customer Count (≥${kpi.threshold}L)` : 'Total Volume';
+    const targetCount  = Object.keys(kpi.targets || {}).length;
+    
+    return `<div class="saved-kpi-item">
+      <div style="flex:1; min-width:0;">
+        <div class="kpi-name">🔧 ${kpi.name}</div>
+        <div class="kpi-meta">
+          <span class="text-indigo-400">●</span> ${typeLabel} 
+          &nbsp;|&nbsp; ${sectorLabel} 
+          &nbsp;|&nbsp; ${brandLabel} 
+          &nbsp;|&nbsp; ${productLabel}
+          ${targetCount > 0 ? `&nbsp;|&nbsp; <span class="text-emerald-400">${targetCount} target${targetCount > 1 ? 's' : ''} set</span>` : ''}
+        </div>
+      </div>
+      <div class="kpi-actions">
+        <button class="btn-edit" onclick="editBuiltinKPI('${kpi.id}')">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editBuiltinKPI(id) {
+  const kpi = BUILTIN_KPIS.find(k => k.id === id);
+  if (!kpi) return;
+
+  document.getElementById('editing-kpi-id').value = `builtin_${id}`;
+  document.getElementById('kpi-name-input').value = kpi.name;
+  document.getElementById('kpi-name-input').disabled = false; // Allow name editing
+  document.getElementById('kpi-type-select').value = kpi.type;
+  document.getElementById('kpi-type-select').disabled = false; // Allow type change
+  document.getElementById('kpi-threshold-input').value = kpi.threshold;
+  document.getElementById('builder-title').textContent = `✏️ Edit ${kpi.name}`;
+  document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+  // Clear and set pills
+  ['sector-pills', 'brand-pills', 'product-pills'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+  
+  (kpi.sectors || []).forEach(v => addPill('sector', v));
+  (kpi.brands || []).forEach(v => addPill('brand', v));
+  (kpi.products || []).forEach(v => addPill('product', v));
+
+  // Refresh dropdowns with current pill state
+  refreshPillDropdowns();
+  
+  // Load targets
+  renderTargetRows();
+  
+  // Scroll to builder
+  document.getElementById('kpi-builder-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderAdminPage() {
+  populateAdminDropdowns([], [], []);  // reset pills
+  renderBuiltinKPIsList(); // NEW: render built-in KPIs list
+  renderSavedKPIsList();
+  renderTargetRows();
+}
+
+// ── Dropdowns: Sector / Brand / Product ──
+function populateAdminDropdowns(selSectors, selBrands, selProducts) {
+  const sectorSel  = document.getElementById('sector-dropdown');
+  const brandSel   = document.getElementById('brand-dropdown');
+  const productSel = document.getElementById('product-dropdown');
+
+  // Sectors: always full list
+  const allSectors = Object.keys(sectorBrandProductMap);
+  sectorSel.innerHTML  = '<option value="">— pick sector —</option>' +
+    allSectors.filter(s=>!selSectors.includes(s)).map(s=>`<option value="${s}">${s}</option>`).join('');
+
+  // Brands: filtered by selected sectors (empty sectors = all)
+  let availBrands = new Set();
+  if (selSectors.length===0) {
+    Object.values(sectorBrandProductMap).forEach(bMap => Object.keys(bMap).forEach(b=>availBrands.add(b)));
+  } else {
+    selSectors.forEach(s => { if(sectorBrandProductMap[s]) Object.keys(sectorBrandProductMap[s]).forEach(b=>availBrands.add(b)); });
+  }
+  brandSel.innerHTML = '<option value="">— pick brand —</option>' +
+    [...availBrands].sort().filter(b=>!selBrands.includes(b)).map(b=>`<option value="${b}">${b}</option>`).join('');
+
+  // Products: filtered by selected brands (empty brands = all in scope)
+  let availProducts = new Set();
+  if (selBrands.length===0) {
+    availBrands.forEach(b => {
+      // collect products from all relevant sectors
+      const sectors = selSectors.length===0 ? Object.keys(sectorBrandProductMap) : selSectors;
+      sectors.forEach(s => { if(sectorBrandProductMap[s]?.[b]) sectorBrandProductMap[s][b].forEach(p=>availProducts.add(p)); });
+    });
+  } else {
+    const sectors = selSectors.length===0 ? Object.keys(sectorBrandProductMap) : selSectors;
+    selBrands.forEach(b => {
+      sectors.forEach(s => { if(sectorBrandProductMap[s]?.[b]) sectorBrandProductMap[s][b].forEach(p=>availProducts.add(p)); });
+    });
+  }
+  productSel.innerHTML = '<option value="">— pick product —</option>' +
+    [...availProducts].sort().filter(p=>!selProducts.includes(p)).map(p=>`<option value="${p}">${p}</option>`).join('');
+
+  // Wire change listeners (re-wire to avoid duplicates via clone trick)
+  rewireDropdownListeners();
+}
+
+function rewireDropdownListeners() {
+  ['sector-dropdown','brand-dropdown','product-dropdown'].forEach(id => {
+    const el = document.getElementById(id);
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+  });
+
+  document.getElementById('sector-dropdown').addEventListener('change', function() {
+    if (!this.value) return;
+    addPill('sector', this.value);
+    this.value = '';
+  });
+  document.getElementById('brand-dropdown').addEventListener('change', function() {
+    if (!this.value) return;
+    addPill('brand', this.value);
+    this.value = '';
+  });
+  document.getElementById('product-dropdown').addEventListener('change', function() {
+    if (!this.value) return;
+    addPill('product', this.value);
+    this.value = '';
+  });
+}
+
+function addPill(type, value) {
+  const map = { sector:'sector-pills', brand:'brand-pills', product:'product-pills' };
+  const container = document.getElementById(map[type]);
+  const pill = document.createElement('span');
+  pill.className = 'pill';
+  pill.dataset.type  = type;
+  pill.dataset.value = value;
+  pill.innerHTML = `${value} <span class="pill-x" data-type="${type}" data-value="${value}">×</span>`;
+  container.appendChild(pill);
+  refreshPillDropdowns();
+}
+
+function removePill(type, value) {
+  const map = { sector:'sector-pills', brand:'brand-pills', product:'product-pills' };
+  const container = document.getElementById(map[type]);
+  [...container.querySelectorAll('.pill')].forEach(p => {
+    if (p.dataset.type===type && p.dataset.value===value) p.remove();
+  });
+  // If a brand is removed, also remove its products
+  if (type === 'sector') {
+    // Optionally clear brands & products that no longer apply — kept simple here
+  }
+  if (type === 'brand') {
+    // Remove products belonging to this brand
+    const productContainer = document.getElementById('product-pills');
+    // We don't track brand→product per pill easily, so just leave products (user can remove)
+  }
+  refreshPillDropdowns();
+}
+
+function refreshPillDropdowns() {
+  const selSectors  = getPillValues('sector');
+  const selBrands   = getPillValues('brand');
+  const selProducts = getPillValues('product');
+  populateAdminDropdowns(selSectors, selBrands, selProducts);
+}
+
+function getPillValues(type) {
+  const map = { sector:'sector-pills', brand:'brand-pills', product:'product-pills' };
+  return [...document.querySelectorAll(`#${map[type]} .pill`)].map(p => p.dataset.value);
+}
+
+// ── Pill × click (delegated) ──
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('pill-x')) {
+    removePill(e.target.dataset.type, e.target.dataset.value);
+  }
+});
+
+// ── SE Target rows ──
+function renderTargetRows() {
+  const container = document.getElementById('target-rows');
+  if (allSENames.length===0) { container.innerHTML='<p class="text-slate-500 text-xs">Run Refresh first to load SE list.</p>'; return; }
+
+  // If editing, load existing targets
+  const editingId = document.getElementById('editing-kpi-id').value;
+  let existing = null;
+  let targets = {};
+  
+  if (editingId.startsWith('builtin_')) {
+    const builtinId = editingId.replace('builtin_', '');
+    existing = BUILTIN_KPIS.find(k => k.id === builtinId);
+    targets = existing?.targets || {};
+  } else if (editingId) {
+    existing = CUSTOM_KPIS.find(k => k.id === editingId);
+    targets = existing?.targets || {};
+  }
+
+  // Deduplicate SE names (remove duplicates)
+  const uniqueSEs = [...new Set(allSENames)];
+
+  container.innerHTML = uniqueSEs.map(se =>
+    `<div class="target-row">
+       <label>${se}</label>
+       <input type="number" class="target-input" data-se="${se}" placeholder="0" value="${targets[se]||''}">
+     </div>`
+  ).join('');
+}
+
+function collectTargets() {
+  const targets = {};
+  document.querySelectorAll('.target-input').forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v > 0) targets[inp.dataset.se] = v;
+  });
+  return targets;
+}
+
+// ── Save / Edit / Delete KPI ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('save-kpi-btn').addEventListener('click', saveKPI);
+  document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+});
+
+function saveKPI() {
+  const name      = document.getElementById('kpi-name-input').value.trim();
+  const type      = document.getElementById('kpi-type-select').value;
+  const threshold = parseFloat(document.getElementById('kpi-threshold-input').value) || 0;
+  const sectors   = getPillValues('sector');
+  const brands    = getPillValues('brand');
+  const products  = getPillValues('product');
+  const targets   = collectTargets();
+  const editingId = document.getElementById('editing-kpi-id').value;
+
+  if (!name) { alert('Please enter a KPI name.'); return; }
+
+  // Check if editing a built-in KPI
+  if (editingId.startsWith('builtin_')) {
+    const builtinId = editingId.replace('builtin_', '');
+    const idx = BUILTIN_KPIS.findIndex(k => k.id === builtinId);
+    if (idx !== -1) {
+      BUILTIN_KPIS[idx] = {
+        ...BUILTIN_KPIS[idx],
+        threshold,
+        sectors,
+        brands,
+        products,
+        targets
+      };
+    }
+  } else if (editingId) {
+    // Update existing custom KPI
+    const idx = CUSTOM_KPIS.findIndex(k => k.id === editingId);
+    if (idx !== -1) {
+      CUSTOM_KPIS[idx] = { id: editingId, name, type, sectors, brands, products, threshold, targets };
+    }
+  } else {
+    // New custom KPI
+    const id = 'custom_' + Date.now();
+    CUSTOM_KPIS.push({ id, name, type, sectors, brands, products, threshold, targets });
+  }
+
+  // Persist to config via PHP
+  saveConfigFile().then(() => {
+    alert('✅ KPI saved! Click "Refresh Now" to update the dashboard.');
+    cancelEdit();
+    renderBuiltinKPIsList();
+    renderSavedKPIsList();
+  }).catch(err => { alert('Error saving: ' + err.message); });
+}
+
+function editKPI(id) {
+  const kpi = CUSTOM_KPIS.find(k=>k.id===id);
+  if (!kpi) return;
+
+  document.getElementById('editing-kpi-id').value = id;
+  document.getElementById('kpi-name-input').value  = kpi.name;
+  document.getElementById('kpi-type-select').value = kpi.type;
+  document.getElementById('kpi-threshold-input').value = kpi.threshold;
+  document.getElementById('builder-title').textContent = '✏️ Edit KPI';
+  document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+  // Set pills
+  ['sector','brand','product'].forEach(type => {
+    const map = { sector:'sector-pills', brand:'brand-pills', product:'product-pills' };
+    document.getElementById(map[type]).innerHTML = '';
+  });
+  kpi.sectors.forEach(v  => addPill('sector',  v));
+  kpi.brands.forEach(v   => addPill('brand',   v));
+  kpi.products.forEach(v => addPill('product', v));
+
+  renderTargetRows(); // reload with existing targets
+}
+
+function deleteKPI(id) {
+  if (!confirm('Delete this custom KPI?')) return;
+  CUSTOM_KPIS = CUSTOM_KPIS.filter(k=>k.id!==id);
+  saveConfigFile().then(() => {
+    alert('✅ KPI deleted. Refresh to update.');
+    renderSavedKPIsList();
+  }).catch(err => { alert('Error: '+err.message); });
+}
+
+function cancelEdit() {
+  document.getElementById('editing-kpi-id').value = '';
+  document.getElementById('kpi-name-input').value  = '';
+  document.getElementById('kpi-name-input').disabled = false; // Re-enable
+  document.getElementById('kpi-type-select').value = 'customer_count';
+  document.getElementById('kpi-type-select').disabled = false; // Re-enable
+  document.getElementById('kpi-threshold-input').value = 9;
+  document.getElementById('builder-title').textContent = '➕ Create New KPI';
+  document.getElementById('cancel-edit-btn').classList.add('hidden');
+  ['sector-pills','brand-pills','product-pills'].forEach(id => document.getElementById(id).innerHTML='');
+  refreshPillDropdowns();
+  renderTargetRows();
+}
+
+function renderSavedKPIsList() {
+  const container = document.getElementById('saved-kpis-list');
+  if (CUSTOM_KPIS.length===0) { 
+    container.innerHTML='<p class="text-slate-500 text-sm">No custom KPIs created yet. Use the form above to create your first KPI.</p>'; 
+    return; 
+  }
+  container.innerHTML = CUSTOM_KPIS.map(kpi => {
+    const sectorLabel  = kpi.sectors.length  ? kpi.sectors.join(', ')  : 'All Sectors';
+    const brandLabel   = kpi.brands.length   ? kpi.brands.join(', ')  : 'All Brands';
+    const productLabel = kpi.products.length ? `${kpi.products.length} product${kpi.products.length>1?'s':''}` : 'All Products';
+    const typeLabel    = kpi.type==='customer_count' ? `Customer Count (≥${kpi.threshold}L)` : 'Total Volume';
+    const targetCount  = Object.keys(kpi.targets||{}).length;
+    
+    return `<div class="saved-kpi-item">
+      <div style="flex:1; min-width:0;">
+        <div class="kpi-name">⭐ ${kpi.name}</div>
+        <div class="kpi-meta">
+          <span class="text-indigo-400">●</span> ${typeLabel} 
+          &nbsp;|&nbsp; ${sectorLabel} 
+          &nbsp;|&nbsp; ${brandLabel} 
+          &nbsp;|&nbsp; ${productLabel}
+          ${targetCount > 0 ? `&nbsp;|&nbsp; <span class="text-emerald-400">${targetCount} target${targetCount>1?'s':''} set</span>` : ''}
+        </div>
+      </div>
+      <div class="kpi-actions">
+        <button class="btn-edit" onclick="editKPI('${kpi.id}')">Edit</button>
+        <button class="btn-delete" onclick="deleteKPI('${kpi.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Save config (CUSTOM_KPIS) via PHP ──
+async function saveConfigFile() {
+  // We rebuild the full config.js content and POST it
+  const configContent = `/**
+ * AUTO-GENERATED config.js — do not edit CUSTOM_KPIS manually
+ */
+window.DASHBOARD_CONFIG = {
+    DATA_FOLDER: '${DATA_FOLDER}',
+    CUSTOMER_MASTER_FILE: '${CUSTOMER_MASTER_FILE}',
+    INVOICE_DATA_FILES: ${JSON.stringify(INVOICE_DATA_FILES)},
+    EXCLUDED_PRODUCTS_LIST: ${JSON.stringify(window.DASHBOARD_CONFIG.EXCLUDED_PRODUCTS_LIST)},
+    POWER1_PRODUCTS_LIST: ${JSON.stringify([...POWER1_PRODUCTS_LIST])},
+    ACTIV_BRANDS_INCLUDE:    ${JSON.stringify(window.DASHBOARD_CONFIG.ACTIV_BRANDS_INCLUDE)},
+    ACTIV_BRANDS_EXCLUDE:    ${JSON.stringify(window.DASHBOARD_CONFIG.ACTIV_BRANDS_EXCLUDE)},
+    MAGNATEC_BRANDS_INCLUDE: ${JSON.stringify(window.DASHBOARD_CONFIG.MAGNATEC_BRANDS_INCLUDE)},
+    CRB_BRANDS_INCLUDE:      ${JSON.stringify(window.DASHBOARD_CONFIG.CRB_BRANDS_INCLUDE)},
+    AUTOCARE_BRANDS_INCLUDE: ${JSON.stringify(window.DASHBOARD_CONFIG.AUTOCARE_BRANDS_INCLUDE)},
+    COLUMNS: ${JSON.stringify(window.DASHBOARD_CONFIG.COLUMNS)},
+    BUILTIN_KPIS: ${JSON.stringify(BUILTIN_KPIS, null, 2)},
+    CUSTOM_KPIS: ${JSON.stringify(CUSTOM_KPIS, null, 2)}
+};`;
+
+  // Save via a second PHP endpoint — reuse save_cache.php logic with a filename param
+  // For simplicity we POST to save_cache.php with a special header
+  const res = await fetch('save_config.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: configContent
+  });
+  if (!res.ok) throw new Error('save_config.php failed — make sure it exists on your server.');
+  return await res.text();
+}
+
+// ══════════════════════════════════════════════════
+// 9.  REFRESH — full data processing
+// ══════════════════════════════════════════════════
+async function handleRefreshClick() {
+  if (refreshButton.classList.contains('spinning')) return;
+  if (!confirm('Re-process all sales data and update cache?')) return;
+
+  refreshButton.classList.add('spinning');
+  loader.style.display='flex'; loader.style.opacity=1;
+  loaderText.textContent='Starting refresh…';
+
+  try {
+    await loadConfig();
+    loaderText.textContent='Loading XLSX library…';
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    if (typeof XLSX==='undefined') throw new Error('XLSX.js failed to load.');
+
+    loaderText.textContent='Processing data…';
+    const newCache = await runFullDataProcessing();
+
+    loaderText.textContent='Saving cache…';
+    await saveCacheData(newCache);
+
+    loaderText.textContent='✅ Done! Reloading…';
+    setTimeout(()=>location.reload(), 1500);
+  } catch(err) {
+    console.error(err);
+    loaderText.innerHTML=`<p class="text-red-400 font-bold text-lg mb-2">Refresh Failed</p><p class="text-sm text-slate-300">${err.message}</p><button onclick="location.reload()" class="mt-4 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg">Close</button>`;
+    refreshButton.classList.remove('spinning');
+  }
+}
+
+function loadScript(src) {
+  return new Promise((resolve,reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script'); s.src=src; s.onload=resolve; s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function loadRawData(url) {
+  const res = await fetch(`${url}?v=${Date.now()}`);
+  if (!res.ok) throw new Error(`Fetch failed: ${url} (${res.status})`);
+  const buf  = await res.arrayBuffer();
+  const wb   = XLSX.read(new Uint8Array(buf), {type:'array'});
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, {defval:""});
+}
+
+async function saveCacheData(data) {
+  const res = await fetch('save_cache.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message||res.statusText);
+}
+
+// ══════════════════════════════════════════════════
+// 10.  FULL DATA PROCESSING ENGINE
+// ══════════════════════════════════════════════════
+async function runFullDataProcessing() {
+  // ── Load raw files ──
+  loaderText.textContent='Loading invoice…';
+  const salesArrays = await Promise.all(INVOICE_DATA_FILES.map(f=>loadRawData(`${DATA_FOLDER}/${f}`)));
+  const rawSales    = [].concat(...salesArrays);
+
+  loaderText.textContent='Loading customer master…';
+  const rawMaster   = await loadRawData(`${DATA_FOLDER}/${CUSTOMER_MASTER_FILE}`);
+
+  // ── Filter current month ──
+  const filtered = rawSales.filter(r => {
+    const d = excelDateToJSDate(r[COL_INVOICE_DATE]);
+    return d && d.getMonth()===currentMonth && d.getFullYear()===currentYear;
+  });
+  if (filtered.length===0) throw new Error(`No data for ${currentMonthName} ${currentYear}.`);
+
+  // ── Build Sector → Brand → Product map & Sector → SE map ──
+  loaderText.textContent='Building sector maps…';
+  const _sbpMap = {};  // sector → brand → Set(products)
+  const _ssMap  = {};  // sector → Set(SE)
+  const _allSEs = new Set();
+  
+  filtered.forEach(r => {
+    const sector  = String(r[COL_SECTOR_NAME]||'').trim();
+    const brand   = String(r[COL_BRAND_NAME] ||'').trim();
+    const product = String(r[COL_PRODUCT_NAME]||'').trim();
+    let   se      = String(r[COL_SE_NAME]     ||'').trim();
+    
+    // Normalize SE name spacing (remove double spaces, standardize)
+    se = se.replace(/\s+/g, ' ').trim();
+    
+    if (sector && brand) {
+      if (!_sbpMap[sector])        _sbpMap[sector]        = {};
+      if (!_sbpMap[sector][brand]) _sbpMap[sector][brand] = new Set();
+      if (product) _sbpMap[sector][brand].add(product);
+    }
+    if (sector && se) {
+      if (!_ssMap[sector]) _ssMap[sector] = new Set();
+      _ssMap[sector].add(se);
+    }
+    if (se) _allSEs.add(se);
+  });
+  
+  // Also add SEs from customer master (normalized)
+  rawMaster.forEach(r => { 
+    let se = String(r[COL_MASTER_SE_NAME]||'').trim();
+    se = se.replace(/\s+/g, ' ').trim(); // normalize
+    if(se) _allSEs.add(se); 
+  });
+
+  // Serialise Sets to arrays for JSON (deduplicated automatically by Set)
+  const sectorBrandProductMapCache = {};
+  Object.keys(_sbpMap).forEach(s => {
+    sectorBrandProductMapCache[s] = {};
+    Object.keys(_sbpMap[s]).forEach(b => { sectorBrandProductMapCache[s][b] = [..._sbpMap[s][b]]; });
+  });
+  const sectorSEMapCache = {};
+  Object.keys(_ssMap).forEach(s => { sectorSEMapCache[s] = [..._ssMap[s]]; });
+  const allSENamesArray = [..._allSEs].sort(); // Convert Set to sorted array (already deduplicated)
+
+  // ── Init cache ──
+  const cache = {
+    lastUpdated: new Date().toISOString(),
+    month: currentMonth,
+    year:  currentYear,
+    reports:  {},
+    drilldown:{},
+    sectors:  Object.keys(_sbpMap),
+    sectorBrandProductMap: sectorBrandProductMapCache,
+    sectorSEMap:           sectorSEMapCache,
+    allSENames:            allSENamesArray
+  };
+
+  // ── Helpers ──
+  const isAutocare = brand => AUTOCARE_BRANDS_INCLUDE.some(ac => getStr(brand).includes(ac));
+  const nonAutocare = filtered.filter(r => !isAutocare(r[COL_BRAND_NAME]));
+
+  // ═══ BUILT-IN REPORTS ═══
+
+  // 1. Volume by SE
+  loaderText.textContent='Calculating Volume by SE…';
+  buildVolumeBySE(cache, nonAutocare);
+
+  // 2. Weekly Sales
+  buildWeeklySales(cache, nonAutocare);
+
+  // 3-8. Process Built-in KPIs using buildCustomKPIReport
+  BUILTIN_KPIS.forEach(kpi => {
+    if (kpi.id === 'weeklySales') return; // Already built above
+    if (kpi.id === 'volumeBySE') {
+      // Volume by SE uses nonAutocare data
+      buildVolumeBySE(cache, nonAutocare);
+    } else {
+      // All other built-in KPIs use buildCustomKPIReport
+      buildCustomKPIReport(cache, filtered, kpi);
+    }
+  });
+
+  // 9. Volume by Brand
+  buildVolByBrand(cache, filtered);
+
+  // 10. Top 10 Customers
+  buildTopCustomers(cache, filtered);
+
+  // 11. Unbilled - needs core records (non-autocare, non-excluded)
+  const coreRecords = nonAutocare.filter(r => !EXCLUDED_PRODUCTS_LIST.some(s=>getStr(r[COL_PRODUCT_NAME]).includes(s)));
+  buildUnbilled(cache, coreRecords, rawMaster);
+
+  // ═══ CUSTOM KPIs ═══
+  loaderText.textContent='Processing custom KPIs…';
+  CUSTOM_KPIS.forEach(kpi => buildCustomKPIReport(cache, filtered, kpi));
+
+  return cache;
+}
+
+// ══════════════════════════════════════════════════
+// 11.  BUILT-IN REPORT BUILDERS
+// ══════════════════════════════════════════════════
+
+function buildVolumeBySE(cache, data) {
+  const agg = {};
+  const drill = {};
+  data.forEach(r => {
+    const se   = r[COL_SE_NAME];
+    const cust = r[COL_CUSTOMER_NAME];
+    const vol  = getNum(r[COL_PRODUCT_VOLUME]);
+    if (se) agg[se] = (agg[se]||0) + vol;
+    if (se && cust) { if(!drill[se]) drill[se]={}; drill[se][cust]=(drill[se][cust]||0)+vol; }
+  });
+  cache.reports.volumeBySE = Object.entries(agg).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+  const l1 = {};
+  Object.keys(drill).forEach(se => {
+    l1[se] = Object.entries(drill[se]).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+  });
+  cache.drilldown.volumeBySE = { base:{headers:["Sales Executive","Total Volume (Ltr)"]}, level1:{title:"Volume for {key1}",headers:["Customer Name","Volume (Ltr)"],...l1} };
+}
+
+function buildWeeklySales(cache, data) {
+  const weeks = getWeeklySales(data);
+  cache.reports.weeklySales = weeks.map(w=>[w.name, w.volume.toFixed(2)]);
+  const l1={}, l2={};
+  weeks.forEach(w => {
+    const wRecs = data.filter(r => { const d=excelDateToJSDate(r[COL_INVOICE_DATE]); return d&&d>=w.start&&d<=w.end; });
+    const seVols = {};
+    wRecs.forEach(r => { const se=r[COL_SE_NAME]; if(se) seVols[se]=(seVols[se]||0)+getNum(r[COL_PRODUCT_VOLUME]); });
+    l1[w.name] = Object.entries(seVols).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+    l2[w.name] = {};
+    Object.keys(seVols).forEach(se => {
+      const custV = {};
+      wRecs.filter(r=>r[COL_SE_NAME]===se).forEach(r => { const c=r[COL_CUSTOMER_NAME]; if(c) custV[c]=(custV[c]||0)+getNum(r[COL_PRODUCT_VOLUME]); });
+      l2[w.name][se] = Object.entries(custV).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+    });
+  });
+  cache.drilldown.weeklySales = {
+    base:{headers:["Week","Total Volume (Ltr)"]},
+    level1:{title:"SE Volume for {key1}",headers:["Sales Executive","Volume (Ltr)"],...l1},
+    level2:{title:"Customers for {key2} in {key1}",headers:["Customer Name","Volume (Ltr)"],...l2}
+  };
+}
+
+function buildActivCount(cache, data) {
+  const vols = {};
+  data.filter(r => {
+    const b = getStr(r[COL_BRAND_NAME]);
+    return ACTIV_BRANDS_INCLUDE.some(x=>b.includes(x)) && !ACTIV_BRANDS_EXCLUDE.some(x=>b.includes(x));
+  }).forEach(r => {
+    const cc = r[COL_CUSTOMER_CODE];
+    if(cc) { if(!vols[cc]) vols[cc]={vol:0,se:r[COL_SE_NAME],name:r[COL_CUSTOMER_NAME]}; vols[cc].vol+=getNum(r[COL_PRODUCT_VOLUME]); }
+  });
+  const counts = {};
+  Object.values(vols).filter(c=>c.vol>=BUILTIN_THRESHOLDS.activ).forEach(c => { if(c.se) counts[c.se]=(counts[c.se]||0)+1; });
+  cache.reports.activCount = Object.entries(counts).map(([n,c])=>[n,c]).sort((a,b)=>b[1]-a[1]);
+
+  const l1 = {};
+  const bySE = {};
+  Object.values(vols).forEach(c => { if(c.se&&c.name) { if(!bySE[c.se]) bySE[c.se]={}; bySE[c.se][c.name]=(bySE[c.se][c.name]||0)+c.vol; } });
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=BUILTIN_THRESHOLDS.activ ? `<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.activ}L)</span>` : `<span class="status-under">⚠ Under (<${BUILTIN_THRESHOLDS.activ}L)</span>`;
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+  });
+  cache.drilldown.activCount = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"Activ Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1} };
+}
+
+function buildPower1Count(cache, data) {
+  const qualifying = data.filter(r => POWER1_PRODUCTS_LIST.has(r[COL_PRODUCT_NAME]) && getNum(r[COL_PRODUCT_VOLUME])>=BUILTIN_THRESHOLDS.power1);
+  const seCounts = {};
+  qualifying.forEach(r => { const se=r[COL_SE_NAME]; if(se) { if(!seCounts[se]) seCounts[se]=new Set(); seCounts[se].add(r[COL_CUSTOMER_CODE]); } });
+  cache.reports.power1Count = Object.entries(seCounts).map(([n,s])=>[n,s.size]).sort((a,b)=>b[1]-a[1]);
+
+  const allP1 = data.filter(r => POWER1_PRODUCTS_LIST.has(r[COL_PRODUCT_NAME]));
+  const bySE = {};
+  allP1.forEach(r => { const se=r[COL_SE_NAME],c=r[COL_CUSTOMER_NAME]; if(se&&c) { if(!bySE[se]) bySE[se]={}; bySE[se][c]=(bySE[se][c]||0)+getNum(r[COL_PRODUCT_VOLUME]); } });
+  const l1 = {};
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=5 ? '<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.power1}L)</span>' : '<span class="status-under">⚠ Under (<${BUILTIN_THRESHOLDS.power1}L)</span>';
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+  });
+  cache.drilldown.power1Count = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"Power1 Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1} };
+}
+
+function buildMagnatecCount(cache, data) {
+  const magFilter = r => MAGNATEC_BRANDS_INCLUDE.some(b=>getStr(r[COL_BRAND_NAME]).includes(b));
+  const qualifying = data.filter(r => magFilter(r) && getNum(r[COL_PRODUCT_VOLUME])>=BUILTIN_THRESHOLDS.magnatec);
+  const seCounts = {};
+  qualifying.forEach(r => { const se=r[COL_SE_NAME]; if(se) { if(!seCounts[se]) seCounts[se]=new Set(); seCounts[se].add(r[COL_CUSTOMER_CODE]); } });
+  cache.reports.magnatecCount = Object.entries(seCounts).map(([n,s])=>[n,s.size]).sort((a,b)=>b[1]-a[1]);
+
+  const bySE = {};
+  data.filter(magFilter).forEach(r => { const se=r[COL_SE_NAME],c=r[COL_CUSTOMER_NAME]; if(se&&c) { if(!bySE[se]) bySE[se]={}; bySE[se][c]=(bySE[se][c]||0)+getNum(r[COL_PRODUCT_VOLUME]); } });
+  const l1 = {};
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=3.5 ? '<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.magnatec}L)</span>' : '<span class="status-under">⚠ Under (<${BUILTIN_THRESHOLDS.magnatec}L)</span>';
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+  });
+  cache.drilldown.magnatecCount = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"Magnatec Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1} };
+}
+
+function buildCRBCount(cache, data) {
+  const crbFilter = r => CRB_BRANDS_INCLUDE.some(b=>getStr(r[COL_BRAND_NAME]).includes(b));
+  const qualifying = data.filter(r => crbFilter(r) && getNum(r[COL_PRODUCT_VOLUME])>=BUILTIN_THRESHOLDS.crb);
+  const seCounts = {};
+  qualifying.forEach(r => { const se=r[COL_SE_NAME]; if(se) { if(!seCounts[se]) seCounts[se]=new Set(); seCounts[se].add(r[COL_CUSTOMER_CODE]); } });
+  cache.reports.crbCount = Object.entries(seCounts).map(([n,s])=>[n,s.size]).sort((a,b)=>b[1]-a[1]);
+
+  const bySE = {}, prodBySE = {};
+  data.filter(crbFilter).forEach(r => {
+    const se=r[COL_SE_NAME],c=r[COL_CUSTOMER_NAME],p=r[COL_PRODUCT_NAME];
+    if(se&&c) { if(!bySE[se]) bySE[se]={}; bySE[se][c]=(bySE[se][c]||0)+getNum(r[COL_PRODUCT_VOLUME]); }
+    if(se&&c&&p) { if(!prodBySE[se]) prodBySE[se]={}; if(!prodBySE[se][c]) prodBySE[se][c]={}; prodBySE[se][c][p]=(prodBySE[se][c][p]||0)+getNum(r[COL_PRODUCT_VOLUME]); }
+  });
+  const l1={}, l2={};
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=1 ? '<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.crb}L)</span>' : '<span class="status-under">⚠ Under (<${BUILTIN_THRESHOLDS.crb}L)</span>';
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+    if(!l2[se]) l2[se]={};
+    Object.keys(prodBySE[se]||{}).forEach(c => {
+      l2[se][c] = Object.entries(prodBySE[se][c]).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+    });
+  });
+  cache.drilldown.crbCount = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"CRB Turbomax Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1}, level2:{title:"CRB Products for {key2}",headers:["Product","Volume (Ltr)"],...l2} };
+}
+
+function buildHighVolCount(cache, coreRecords) {
+  const custVols = {};
+  coreRecords.forEach(r => {
+    const key = `${r[COL_SE_NAME]}|${r[COL_CUSTOMER_NAME]}`;
+    custVols[key] = (custVols[key]||0) + getNum(r[COL_PRODUCT_VOLUME]);
+  });
+  const seCounts = {};
+  Object.entries(custVols).forEach(([key,vol]) => { if(vol>=9) { const se=key.split('|')[0]; if(se) seCounts[se]=(seCounts[se]||0)+1; } });
+  cache.reports.highVolCount = Object.entries(seCounts).map(([n,c])=>[n,c]).sort((a,b)=>b[1]-a[1]);
+
+  const bySE = {};
+  coreRecords.forEach(r => { const se=r[COL_SE_NAME],c=r[COL_CUSTOMER_NAME]; if(se&&c) { if(!bySE[se]) bySE[se]={}; bySE[se][c]=(bySE[se][c]||0)+getNum(r[COL_PRODUCT_VOLUME]); } });
+  const l1 = {};
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=9 ? '<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.highvol}L)</span>' : '<span class="status-under">⚠ Under (<9L)</span>';
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+  });
+  cache.drilldown.highVolCount = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"Core Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1} };
+}
+
+function buildAutocareCount(cache, data) {
+  const acFilter = r => AUTOCARE_BRANDS_INCLUDE.some(ac=>getStr(r[COL_BRAND_NAME]).includes(ac));
+  const vols = {};
+  data.filter(acFilter).forEach(r => {
+    const cc=r[COL_CUSTOMER_CODE];
+    if(cc) { if(!vols[cc]) vols[cc]={vol:0,se:r[COL_SE_NAME],name:r[COL_CUSTOMER_NAME]}; vols[cc].vol+=getNum(r[COL_PRODUCT_VOLUME]); }
+  });
+  const counts = {};
+  Object.values(vols).filter(c=>c.vol>=5).forEach(c => { if(c.se) counts[c.se]=(counts[c.se]||0)+1; });
+  cache.reports.autocareCount = Object.entries(counts).map(([n,c])=>[n,c]).sort((a,b)=>b[1]-a[1]);
+
+  const l1={}, bySE={};
+  Object.values(vols).forEach(c => { if(c.se&&c.name) { if(!bySE[c.se]) bySE[c.se]={}; bySE[c.se][c.name]=(bySE[c.se][c.name]||0)+c.vol; } });
+  Object.keys(bySE).forEach(se => {
+    l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+      const st = v>=5 ? '<span class="status-qualified">✓ Qualified (≥${BUILTIN_THRESHOLDS.power1}L)</span>' : '<span class="status-under">⚠ Under (<${BUILTIN_THRESHOLDS.power1}L)</span>';
+      return [n,v.toFixed(2),st,v];
+    }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+  });
+  cache.drilldown.autocareCount = { base:{headers:["Sales Executive","Customer Count"]}, level1:{title:"Autocare Volume for {key1}",headers:["Customer","Volume (Ltr)","Status"],...l1} };
+}
+
+function buildVolByBrand(cache, data) {
+  const agg = {};
+  data.forEach(r => { const b=r[COL_BRAND_NAME]; if(b) agg[b]=(agg[b]||0)+getNum(r[COL_PRODUCT_VOLUME]); });
+  cache.reports.volByBrand = Object.entries(agg).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+  cache.drilldown.volByBrand = { base:{headers:["Brand Name","Volume (Ltr)"]} };
+}
+
+function buildTopCustomers(cache, data) {
+  const agg = {};
+  data.forEach(r => { const c=r[COL_CUSTOMER_NAME]; if(c) agg[c]=(agg[c]||0)+getNum(r[COL_TOTAL_VALUE]); });
+  cache.reports.topCustomers = Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,10)
+    .map(([n,v])=>[n, `₹${v.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`]);
+  cache.drilldown.topCustomers = { base:{headers:["Customer Name","Total Value"]} };
+}
+
+function buildUnbilled(cache, coreRecords, rawMaster) {
+  const volByCust = {};
+  coreRecords.forEach(r => { const cc=r[COL_CUSTOMER_CODE]; if(cc) volByCust[cc]=(volByCust[cc]||0)+getNum(r[COL_PRODUCT_VOLUME]); });
+  const fullList = rawMaster.map(c => ({
+    code: c[COL_MASTER_CUSTOMER_CODE],
+    name: c[COL_MASTER_CUSTOMER_NAME],
+    se:   c[COL_MASTER_SE_NAME],
+    volume: volByCust[c[COL_MASTER_CUSTOMER_CODE]] || 0
+  })).filter(c => c.volume < BUILTIN_THRESHOLDS.highvol);
+
+  const summary = {};
+  fullList.forEach(c => { if(c.se) summary[c.se]=(summary[c.se]||0)+1; });
+  cache.reports.unbilled = Object.entries(summary).map(([n,c])=>[n,c]).sort((a,b)=>b[1]-a[1]);
+
+  const l1 = {};
+  const bySE = {};
+  fullList.forEach(c => { if(c.se) { if(!bySE[c.se]) bySE[c.se]=[]; bySE[c.se].push(c); } });
+  Object.keys(bySE).forEach(se => {
+    l1[se] = bySE[se].map(c=>[c.name,c.volume.toFixed(2)]).sort((a,b)=>parseFloat(a[1])-parseFloat(b[1]));
+  });
+  cache.drilldown.unbilled = {
+    base:{title:"Unbilled / Under-Billed by Sales Executive", headers:["Sales Executive","Under-Billed Count"]},
+    level1:{title:"Unbilled Customers for {key1}", headers:["Customer Name","Volume (Ltr)"],...l1}
+  };
+}
+
+// ══════════════════════════════════════════════════
+// 12.  CUSTOM KPI REPORT BUILDER  ★ KEY ENGINE ★
+// ══════════════════════════════════════════════════
+function buildCustomKPIReport(cache, allData, kpi) {
+  // 1. Filter by sectors
+  let records = allData;
+  if (kpi.sectors && kpi.sectors.length > 0) {
+    const sSet = new Set(kpi.sectors);
+    records = records.filter(r => sSet.has(String(r[COL_SECTOR_NAME]||'').trim()));
+  }
+  
+  // 2. Filter by brands
+  if (kpi.brands && kpi.brands.length > 0) {
+    const bSet = new Set(kpi.brands.map(b => b.toUpperCase()));
+    records = records.filter(r => bSet.has(String(r[COL_BRAND_NAME]||'').trim().toUpperCase()));
+  }
+  
+  // 2b. Exclude brands if specified (for Activ - exclude Activ Essential)
+  if (kpi.excludeBrands && Array.isArray(kpi.excludeBrands)) {
+    const excludeSet = new Set(kpi.excludeBrands.map(b => b.toUpperCase()));
+    records = records.filter(r => !excludeSet.has(String(r[COL_BRAND_NAME]||'').trim().toUpperCase()));
+  }
+  
+  // 3. Filter by products
+  if (kpi.useProductList) {
+    // Use POWER1_PRODUCTS_LIST for Power1 built-in
+    records = records.filter(r => POWER1_PRODUCTS_LIST.has(r[COL_PRODUCT_NAME]));
+  } else if (kpi.products && kpi.products.length > 0) {
+    const pSet = new Set(kpi.products);
+    records = records.filter(r => pSet.has(String(r[COL_PRODUCT_NAME]||'').trim()));
+  }
+  
+  // 3b. Exclude products if specified (for High-Volume - exclude accessories)
+  if (kpi.excludeProducts) {
+    records = records.filter(r => !EXCLUDED_PRODUCTS_LIST.some(s => getStr(r[COL_PRODUCT_NAME]).includes(s)));
+  }
+
+  // Check if targets exist
+  const hasTargets = kpi.targets && Object.keys(kpi.targets).length > 0;
+
+  if (kpi.type === 'customer_count') {
+    // ── Customer Count (unique customers ≥ threshold per SE) ──
+    const custVols = {};  // custCode → {vol, se, name}
+    records.forEach(r => {
+      const cc = r[COL_CUSTOMER_CODE];
+      if (cc) {
+        if (!custVols[cc]) custVols[cc] = { vol:0, se:r[COL_SE_NAME], name:r[COL_CUSTOMER_NAME] };
+        custVols[cc].vol += getNum(r[COL_PRODUCT_VOLUME]);
+      }
+    });
+
+    // Base: count per SE where vol >= threshold (with optional target column)
+    const seCounts = {};
+    Object.values(custVols).filter(c => c.vol >= kpi.threshold).forEach(c => {
+      if (c.se) seCounts[c.se] = (seCounts[c.se]||0) + 1;
+    });
+    
+    // Drilldown L1: SE → customer list with vol + status
+    const bySE = {};
+    Object.values(custVols).forEach(c => {
+      if (c.se && c.name) {
+        if (!bySE[c.se]) bySE[c.se] = {};
+        bySE[c.se][c.name] = (bySE[c.se][c.name]||0) + c.vol;
+      }
+    });
+    const l1 = {};
+    Object.keys(bySE).forEach(se => {
+      l1[se] = Object.entries(bySE[se]).map(([n,v]) => {
+        const st = v >= kpi.threshold
+          ? `<span class="status-qualified">✓ Qualified (≥${kpi.threshold}L)</span>`
+          : `<span class="status-under">⚠ Under (<${kpi.threshold}L)</span>`;
+        return [n, v.toFixed(2), st, v];
+      }).sort((a,b)=>b[3]-a[3]).map(r=>r.slice(0,3));
+    });
+    
+    // Always add target column if targets exist
+    if (hasTargets) {
+      // [SE, Count, Target]
+      cache.reports[kpi.id] = Object.entries(seCounts).map(([se,count]) => {
+        const target = kpi.targets[se] || 0;
+        return [se, count, target];
+      }).sort((a,b)=>b[1]-a[1]);
+      
+      cache.drilldown[kpi.id] = {
+        base: { headers: ["Sales Executive", "Customer Count", "Target"] },
+        level1: { title: `${kpi.name} – Customers for {key1}`, headers: ["Customer", "Volume (Ltr)", "Status"], ...l1 }
+      };
+    } else {
+      // No targets - just count
+      cache.reports[kpi.id] = Object.entries(seCounts).map(([n,c])=>[n,c]).sort((a,b)=>b[1]-a[1]);
+      
+      cache.drilldown[kpi.id] = {
+        base: { headers: ["Sales Executive", "Customer Count"] },
+        level1: { title: `${kpi.name} – Customers for {key1}`, headers: ["Customer", "Volume (Ltr)", "Status"], ...l1 }
+      };
+    }
+
+  } else {
+    // ── Volume type: total volume per SE ──
+    const seVols = {};
+    const drill  = {};
+    records.forEach(r => {
+      const se   = r[COL_SE_NAME];
+      const cust = r[COL_CUSTOMER_NAME];
+      const vol  = getNum(r[COL_PRODUCT_VOLUME]);
+      if (se) seVols[se] = (seVols[se]||0) + vol;
+      if (se && cust) { if(!drill[se]) drill[se]={}; drill[se][cust]=(drill[se][cust]||0)+vol; }
+    });
+    
+    // Build l1 drilldown
+    const l1 = {};
+    Object.keys(drill).forEach(se => {
+      l1[se] = Object.entries(drill[se]).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+    });
+    
+    if (hasTargets) {
+      // [SE, Volume, Target]
+      cache.reports[kpi.id] = Object.entries(seVols).map(([se,vol]) => {
+        const target = kpi.targets[se] || 0;
+        return [se, vol.toFixed(2), target];
+      }).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+      
+      cache.drilldown[kpi.id] = {
+        base: { headers: ["Sales Executive", "Total Volume (Ltr)", "Target"] },
+        level1: { title: `${kpi.name} – Volume for {key1}`, headers: ["Customer", "Volume (Ltr)"], ...l1 }
+      };
+    } else {
+      cache.reports[kpi.id] = Object.entries(seVols).map(([n,v])=>[n,v.toFixed(2)]).sort((a,b)=>parseFloat(b[1])-parseFloat(a[1]));
+      
+      cache.drilldown[kpi.id] = {
+        base: { headers: ["Sales Executive", "Total Volume (Ltr)"] },
+        level1: { title: `${kpi.name} – Volume for {key1}`, headers: ["Customer", "Volume (Ltr)"], ...l1 }
+      };
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 13.  HELPERS
+// ══════════════════════════════════════════════════
+const getNum = v => parseFloat(String(v).replace(/,/g,'')) || 0;
+const getStr = v => String(v||'').toUpperCase();
+
+function excelDateToJSDate(excelDate) {
+  if (!excelDate || isNaN(excelDate)) return null;
+  try {
+    if (String(excelDate).includes('-')) { const d=new Date(excelDate); if(!isNaN(d)) return d; }
+    const d = new Date((excelDate-25569)*86400000);
+    d.setMinutes(d.getMinutes()+d.getTimezoneOffset());
+    return d;
+  } catch(e) { return null; }
+}
+
+function getWeeklySales(data) {
+  const weeks=[], year=currentYear, month=currentMonth;
+  const firstDay = new Date(Date.UTC(year,month,1));
+  const lastDay  = new Date(Date.UTC(year,month+1,0));
+  let weekStart  = new Date(firstDay), weekNumber=1;
+  const dow = firstDay.getUTCDay();
+  if (dow !== 1) {
+    let daysToSun = dow===0 ? 0 : 7-dow;
+    let sunDay    = Math.min(1+daysToSun, lastDay.getUTCDate());
+    weeks.push({ name:`Week ${weekNumber++}`, start:new Date(weekStart), end:new Date(Date.UTC(year,month,sunDay,23,59,59,999)) });
+    weekStart = new Date(Date.UTC(year,month,sunDay+1));
+  }
+  while (weekStart <= lastDay) {
+    let weekEnd = new Date(weekStart);
+    weekEnd.setUTCDate(weekEnd.getUTCDate()+6);
+    if (weekEnd > lastDay) weekEnd = new Date(lastDay);
+    weekEnd.setUTCHours(23,59,59,999);
+    weeks.push({ name:`Week ${weekNumber++}`, start:new Date(weekStart), end:weekEnd });
+    weekStart.setUTCDate(weekStart.getUTCDate()+7);
+  }
+  weeks.forEach(w => {
+    w.volume = data.reduce((s,r) => { const d=excelDateToJSDate(r[COL_INVOICE_DATE]); return (d&&d>=w.start&&d<=w.end)?s+getNum(r[COL_PRODUCT_VOLUME]):s; }, 0);
+  });
+  return weeks;
+}
+
+// ══════════════════════════════════════════════════
+// 14.  GENERIC TABLE RENDERER
+// ══════════════════════════════════════════════════
+function renderTable(container, title, headers, rows, options={}) {
+  if (!container) return;
+
+  let rowsHTML = rows.map((row, i) => {
+    let attrs = '';
+    if (options.drilldown?.enabled && options.drilldown.keys?.[i]) {
+      attrs = `class="drilldown-row" data-keys='${JSON.stringify(options.drilldown.keys[i])}'`;
+    }
+    const cells = row.map(cell => {
+      let c = String(cell), cls = 'text-slate-300';
+      if (c.includes('status-qualified')) cls='';
+      if (c.includes('status-under'))      cls='';
+      return `<td class="px-4 py-3 whitespace-nowrap text-sm ${cls}">${c}</td>`;
+    }).join('');
+    return `<tr ${attrs}>${cells}</tr>`;
+  }).join('');
+
+  if (!rows.length) rowsHTML = `<tr><td colspan="${headers.length}" class="text-center px-4 py-6 text-slate-500">No data.</td></tr>`;
+
+  const totalHTML = createTotalRowHTML(headers, rows);
+  const rid       = `report-${Date.now()}`;
+  const backHTML  = options.drilldown?.backKeys
+    ? `<button class="back-btn text-indigo-400 hover:text-indigo-300 font-semibold text-sm mr-3" data-keys='${JSON.stringify(options.drilldown.backKeys)}'>&larr; Back</button>`
+    : '';
+
+  container.innerHTML = `
+    <div id="${rid}" class="report-container-wrapper">
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center flex-wrap gap-2">${backHTML}<h4 class="text-lg font-semibold text-white">${title}</h4></div>
+        <button class="download-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1 px-3 rounded-md transition" data-target-id="${rid}">⬇ PNG</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-slate-700">
+        <table class="min-w-full divide-y divide-slate-700">
+          <thead class="bg-slate-900/50"><tr>${headers.map(h=>`<th class="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">${h}</th>`).join('')}</tr></thead>
+          <tbody class="divide-y divide-slate-700 bg-slate-800">${rowsHTML}</tbody>
+          ${totalHTML}
+        </table>
+      </div>
+    </div>`;
+}
+
+function createTotalRowHTML(headers, rows) {
+  if (!rows.length) return '';
+  
+  // Find the last numeric column (skip Status and Target columns for summing)
+  let lastCol = headers.length-1;
+  
+  // Skip "Status" column if present
+  if (getStr(headers[lastCol]).includes('STATUS')) lastCol--;
+  
+  // Skip "Target" column if present (we don't sum targets)
+  if (getStr(headers[lastCol]).includes('TARGET')) lastCol--;
+  
+  if (lastCol < 0) return '';
+  
+  const first = String(rows[0][lastCol]||'').replace(/[₹,]/g,'').trim();
+  if (isNaN(parseFloat(first))) return '';
+
+  // Determine if this is a count column (integers) or volume column (decimals)
+  const isCountColumn = headers.some(h => h.toLowerCase().includes('count'));
+  
+  let total = rows.reduce((s,row) => {
+    const val = row.length>headers.length ? row[headers.length] : row[lastCol];
+    return s + getNum(String(val).replace(/[₹,]/g,''));
+  }, 0);
+
+  let fmt;
+  if (String(rows[0][lastCol]||'').startsWith('₹')) {
+    fmt = `₹${total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  } else if (isCountColumn) {
+    fmt = Math.round(total); // Integer for counts
+  } else {
+    fmt = total.toFixed(2); // Decimal for volumes
+  }
+
+  let html = `<tfoot class="bg-slate-900 font-bold text-white"><tr>`;
+  headers.forEach((_,i) => {
+    if (i===0)      html += `<td class="px-4 py-3 text-sm">Total</td>`;
+    else if (i===lastCol) html += `<td class="px-4 py-3 whitespace-nowrap text-sm">${fmt}</td>`;
+    else            html += `<td></td>`;
+  });
+  return html + `</tr></tfoot>`;
+}
+
+// ══════════════════════════════════════════════════
+// 15.  PNG DOWNLOAD
+// ══════════════════════════════════════════════════
+function downloadElementAsImage(el, filename) {
+  if (typeof html2canvas==='undefined') { alert('html2canvas not available'); return; }
+  const clone = el.cloneNode(true);
+  const wrap  = document.createElement('div');
+  Object.assign(wrap.style, { position:'absolute', left:'-9999px', top:'0', width:'1000px', padding:'24px', backgroundColor:'#0f172a', fontFamily:"'Inter',sans-serif" });
+  const btn = clone.querySelector('.download-btn');
+  if (btn) btn.remove();
+  wrap.appendChild(clone);
+  document.body.appendChild(wrap);
+  html2canvas(wrap, { scale:2, useCORS:true, backgroundColor:'#0f172a' }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = filename; a.href = canvas.toDataURL('image/png'); a.click();
+    document.body.removeChild(wrap);
+  }).catch(()=> document.body.removeChild(wrap));
+}
+
+// ══════════════════════════════════════════════════
+// 16.  START
+// ══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  try { await loadConfig(); } catch(e) { console.error(e); }
+  main();
+});
+</script>
+</body>
+</html>
